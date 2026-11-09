@@ -1,0 +1,34 @@
+[project]
+name = "dokploy-mcp"
+version = "0.1.0"
+description = "MCP server for managing a Dokploy instance"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "dokploy-mcp" }]
+keywords = ["mcp", "dokploy", "paas"]
+dependencies = [
+    "httpx>=0.28",
+    "mcp>=2.3,<3",
+    "pydantic>=2.7",
+]
+
+[project.scripts]
+dokploy-mcp = "dokploy_mcp.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "respx>=0.22",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dokploy_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
