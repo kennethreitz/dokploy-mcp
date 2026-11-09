@@ -4,14 +4,20 @@ version = "0.1.0"
 description = "MCP server for managing a Dokploy instance"
 readme = "README.md"
 requires-python = ">=3.11"
-license = "MIT"
-authors = [{ name = "dokploy-mcp" }]
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "Kenneth Reitz", email = "me@kennethreitz.org" }]
 keywords = ["mcp", "dokploy", "paas"]
 dependencies = [
     "httpx>=0.28",
     "mcp>=2.3,<3",
     "pydantic>=2.7",
 ]
+
+[project.urls]
+Homepage = "https://github.com/kennethreitz/dokploy-mcp"
+Repository = "https://github.com/kennethreitz/dokploy-mcp"
+Issues = "https://github.com/kennethreitz/dokploy-mcp/issues"
 
 [project.scripts]
 dokploy-mcp = "dokploy_mcp.cli:main"

@@ -1,6 +1,11 @@
 # dokploy-mcp
 
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/kennethreitz/dokploy-mcp/blob/main/LICENSE)
+[![GitHub](https://img.shields.io/badge/github-kennethreitz%2Fdokploy--mcp-181717?logo=github)](https://github.com/kennethreitz/dokploy-mcp)
+
 An [MCP](https://modelcontextprotocol.io) server for [Dokploy](https://dokploy.com), the self-hosted PaaS. An assistant can list what is on your instance, read deploy and container logs, and deploy, restart, or change env vars. It does not delete anything.
+
+Source: [github.com/kennethreitz/dokploy-mcp](https://github.com/kennethreitz/dokploy-mcp).
 
 The server uses the official Python MCP SDK. In mcp 2 the high-level class `FastMCP` was renamed to `MCPServer`; this project imports that class as `FastMCP` and uses the same decorator API (`@mcp.tool()`).
 
@@ -21,6 +26,8 @@ export DOKPLOY_API_KEY=your-api-key
 Python 3.11 or newer, and [uv](https://docs.astral.sh/uv/).
 
 ```bash
+git clone https://github.com/kennethreitz/dokploy-mcp.git
+cd dokploy-mcp
 uv sync --group dev
 ```
 
@@ -57,7 +64,7 @@ A localhost bind checks the `Host` header and allows only localhost. Binding `0.
 
 ## Connect a client
 
-stdio, from a checkout of this repo:
+stdio, from a clone of [kennethreitz/dokploy-mcp](https://github.com/kennethreitz/dokploy-mcp):
 
 ```json
 {
@@ -185,3 +192,7 @@ I did not have a live Dokploy instance, so nothing here was confirmed against a 
 - There is no compose restart procedure. `restart_compose` is stop followed by start.
 - LibSQL has no search procedure. Databases are listed from the project tree so LibSQL is included.
 - Deployment and log payloads are not schema'd. Log text is taken from a string body or from a `logs` / `log` / `output` field, then clipped.
+
+## License
+
+Apache License 2.0. Copyright 2026 Kenneth Reitz. See [LICENSE](https://github.com/kennethreitz/dokploy-mcp/blob/main/LICENSE).
