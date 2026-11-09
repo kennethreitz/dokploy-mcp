@@ -235,3 +235,90 @@ async def test_logs_and_monitoring_and_instance_status() -> None:
     assert status["version"] == "v0.26.0"
     assert status["ip"]["statusCode"] == 403
     assert status["dockerDiskUsage"] == {"images": 3}
+
+
+@pytest.mark.anyio
+async def test_env_update_on_new_application_sends_empty_build_fields() -> None:
+    # A freshly created Dokploy application stores buildArgs and buildSecrets as null.
+    # saveEnvironment rejects the call when they are missing, so they must be sent as "".
+    with respx.mock:
+        respx.get(f"{BASE}application.one").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "applicationId": "app_new",
+                    "env": None,
+                    "buildArgs": None,
+                    "buildSecrets": None,
+                    "createEnvFile": True,
+                },
+            )
+        )
+        saved = respx.post(f"{BASE}application.saveEnvironment").mock(
+            return_value=httpx.Response(200, json=True)
+        )
+        server = create_server(client=DokployClient("https://dokploy.example.com", "secret-key"))
+        async with Client(server) as client:
+            result = await client.call_tool(
+                "update_application_env",
+                {"application_id": "app_new", "variables": {"PORT": "8787"}},
+            )
+
+    assert result.is_error is False
+    body = json.loads(saved.calls[0].request.read())
+    assert body["env"] == "PORT=8787\n" or body["env"] == "PORT=8787"
+    assert body["buildArgs"] == ""
+    assert body["buildSecrets"] == ""
+    assert body["createEnvFile"] is True
+
+
+@pytest.mark.anyio
+async def test_env_update_keeps_stored_build_fields_when_omitted() -> None:
+    with respx.mock:
+        respx.get(f"{BASE}application.one").mock(
+            return_value=httpx.Response(
+                200,
+                json={
+                    "applicationId": "app_1",
+                    "env": "A=1\n",
+                    "buildArgs": "NODE_ENV=production",
+                    "buildSecrets": "NPM_TOKEN=keep",
+                    "createEnvFile": False,
+                },
+            )
+        )
+        saved = respx.post(f"{BASE}application.saveEnvironment").mock(
+            return_value=httpx.Response(200, json=True)
+        )
+        server = create_server(client=DokployClient("https://dokploy.example.com", "secret-key"))
+        async with Client(server) as client:
+            await client.call_tool("update_application_env", {"application_id": "app_1", "env": "B=2\n"})
+
+    body = json.loads(saved.calls[0].request.read())
+    assert body["env"] == "B=2\n"
+    assert body["buildArgs"] == "NODE_ENV=production"
+    assert body["buildSecrets"] == "NPM_TOKEN=keep"
+    assert body["createEnvFile"] is False
+
+
+@pytest.mark.anyio
+async def test_env_update_refuses_to_write_back_the_mask() -> None:
+    # get_application shows buildSecrets as the mask. Passing it back must not overwrite the real value.
+    with respx.mock:
+        one = respx.get(f"{BASE}application.one").mock(
+            return_value=httpx.Response(200, json={"applicationId": "app_1", "buildSecrets": "NPM_TOKEN=keep"})
+        )
+        saved = respx.post(f"{BASE}application.saveEnvironment").mock(
+            return_value=httpx.Response(200, json=True)
+        )
+        server = create_server(client=DokployClient("https://dokploy.example.com", "secret-key"))
+        async with Client(server) as client:
+            result = await client.call_tool(
+                "update_application_env",
+                {"application_id": "app_1", "build_secrets": "***"},
+            )
+
+    assert result.is_error is True
+    assert "placeholder" in result.content[0].text
+    assert not saved.called
+    assert not one.called

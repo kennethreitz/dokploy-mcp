@@ -388,6 +388,8 @@ def create_server(*, client: DokployClient | None = None) -> FastMCP:
         keys. Those edits merge into the current file unless you also pass env. build_args
         and build_secrets are left unchanged unless you pass them. create_env_file controls
         whether Dokploy writes an env file into the build. This does not redeploy.
+        To change one secret, pass only variables={KEY: value}; other keys are kept.
+        Never pass the *** mask from get_application back as a value.
         """
         return call(
             actions.update_application_env,

@@ -168,6 +168,8 @@ Writes:
 
 Saving env updates the record only. Deploy or restart for running containers to pick it up. Pass `env` to replace the file, or `variables` and `unset` to edit keys. A name in both `variables` and `unset` is removed.
 
+To change one key without resending the rest, pass only `variables` (or `unset`); every other key keeps its stored value. `build_args`, `build_secrets`, and `create_env_file` keep their stored values when omitted (an unset value is sent as an empty string, which Dokploy requires). `get_application` shows build secrets as `***`; passing `***` back as `build_secrets` is refused so the mask can never overwrite the real value.
+
 There is no delete tool. `compose.deploy` can take `freshVolumes`, which wipes volumes; that flag is not exposed.
 
 ## Development

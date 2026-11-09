@@ -5,6 +5,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
+# Shown in place of a secret value. Never write it back to Dokploy.
+MASK = "***"
+
 DATABASE_ENGINES: dict[str, str] = {
     "postgres": "postgresId",
     "mysql": "mysqlId",
@@ -82,7 +85,7 @@ def redact(value: Any) -> Any:
         cleaned: dict[str, Any] = {}
         for key, item in value.items():
             if is_secret_key(key):
-                cleaned[key] = None if item is None else "***"
+                cleaned[key] = None if item is None else MASK
             else:
                 cleaned[key] = redact(item)
         return cleaned
@@ -199,7 +202,7 @@ def project_summary(project: dict[str, Any], *, detailed: bool = False) -> dict[
 def application_detail(record: dict[str, Any]) -> dict[str, Any]:
     detail = _detail_record(record, id_key="applicationId", status_key="applicationStatus")
     if record.get("buildSecrets"):
-        detail["buildSecrets"] = "***"
+        detail["buildSecrets"] = MASK
     return detail
 
 

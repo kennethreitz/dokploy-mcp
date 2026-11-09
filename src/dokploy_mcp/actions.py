@@ -12,6 +12,7 @@ from dokploy_mcp.client import DokployClient
 from dokploy_mcp.envfile import EnvFileError, merge_env
 from dokploy_mcp.errors import DokployError
 from dokploy_mcp.present import (
+    MASK,
     DATABASE_ENGINES,
     application_detail,
     as_list,
@@ -592,6 +593,11 @@ def update_application_env(
 ) -> dict[str, Any]:
     if all(value is None for value in (env, variables, unset, build_args, build_secrets, create_env_file)):
         raise DokployError("Pass env, variables, unset, build_args, build_secrets, or create_env_file.")
+    if build_secrets is not None and build_secrets.strip() == MASK:
+        raise DokployError(
+            f"build_secrets is the {MASK!r} placeholder that get_application shows in place of the real "
+            "value. Omit build_secrets to keep the stored value."
+        )
     current = _expect_dict(
         client.get("application.one", params={"applicationId": application_id}),
         "application",
@@ -609,8 +615,10 @@ def update_application_env(
     body = {
         "applicationId": application_id,
         "env": merged,
-        "buildArgs": current.get("buildArgs") if build_args is None else build_args,
-        "buildSecrets": current.get("buildSecrets") if build_secrets is None else build_secrets,
+        # Dokploy requires both fields. A new application stores them as null, and the
+        # client drops null fields, so fall back to an empty string.
+        "buildArgs": (current.get("buildArgs") or "") if build_args is None else build_args,
+        "buildSecrets": (current.get("buildSecrets") or "") if build_secrets is None else build_secrets,
         "createEnvFile": env_file,
     }
     result = client.post("application.saveEnvironment", body=body)
